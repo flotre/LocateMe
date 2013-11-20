@@ -46,12 +46,14 @@ public class SmsReceiver extends BroadcastReceiver
 			if( str.startsWith("#WRU#") )
 			{
 				// get option
-				String options[] = str.split(":");
+				String fields[] = str.split(":");
+				String options[] = fields[fields.length].split(",");
 				
 				// location request
 				loc_manager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+				
 				// network position
-				loc_listener = new MyLocationListener();			
+				loc_listener = new networkLocationListener();
 				loc_manager.requestLocationUpdates(
 						LocationManager.NETWORK_PROVIDER,
 						5000,
@@ -59,12 +61,14 @@ public class SmsReceiver extends BroadcastReceiver
 						loc_listener);
 				
 				// GPS position
-				loc_listener_gps = new MyLocationListener();			
+				loc_listener_gps = new gpsLocationListener();
 				loc_manager.requestLocationUpdates(
 					LocationManager.GPS_PROVIDER,
 					5000,
 					5,
 					loc_listener_gps);
+				
+				
 				// message only for this application
 				this.abortBroadcast();
 			}
@@ -73,8 +77,8 @@ public class SmsReceiver extends BroadcastReceiver
 	}
 
 	
-	
-	private class MyLocationListener implements LocationListener
+	// location listener for gps
+	private class networkLocationListener implements LocationListener
 	{
 		
 		public void onLocationChanged(Location loc)
@@ -103,4 +107,33 @@ public class SmsReceiver extends BroadcastReceiver
 		}
 	}
 	
+	// location listener for gps
+	private class gpsLocationListener implements LocationListener
+	{
+
+		public void onLocationChanged(Location loc)
+		{
+			if(loc != null)
+			{
+				String message = "http://maps.google.com/maps?q="+
+					loc.getLatitude()+","+loc.getLongitude();
+
+				SmsManager manager = SmsManager.getDefault();
+				manager.sendTextMessage(receiver_tel_number, null, message, null, null);
+
+				loc_manager.removeUpdates(loc_listener_gps);
+			}
+		}	
+
+
+		public void onProviderDisabled(String provider)
+		{
+		}
+		public void onProviderEnabled(String provider)
+		{
+		}
+		public void onStatusChanged(String provider,int status,Bundle extra)
+		{
+		}
+	}
 }
