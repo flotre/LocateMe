@@ -16,6 +16,7 @@ public class SmsReceiver extends BroadcastReceiver
 	String receiver_tel_number;
 	LocationManager loc_manager;
 	LocationListener  loc_listener;
+	LocationListener  loc_listener_gps;
 
 	@Override
 	public void onReceive(Context context, Intent intent)
@@ -44,31 +45,30 @@ public class SmsReceiver extends BroadcastReceiver
 			// test message content
 			if( str.startsWith("#WRU#") )
 			{
+				// get option
+				String options[] = str.split(":");
+				
 				// location request
 				loc_manager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+				// network position
 				loc_listener = new MyLocationListener();			
 				loc_manager.requestLocationUpdates(
 						LocationManager.NETWORK_PROVIDER,
 						5000,
 						10,
 						loc_listener);
-			
+				
+				// GPS position
+				loc_listener_gps = new MyLocationListener();			
+				loc_manager.requestLocationUpdates(
+					LocationManager.GPS_PROVIDER,
+					5000,
+					5,
+					loc_listener_gps);
 				// message only for this application
 				this.abortBroadcast();
 			}
 			
-			
-			
-			// display message
-			Toast.makeText(context,str,Toast.LENGTH_SHORT).show();
-			
-			// Filter message
-			
-			// send to other activity
-			Intent broadcastIntent = new Intent();
-			broadcastIntent.setAction("SMS_RECEIVED_ACTION");
-			broadcastIntent.putExtra("sms",str);
-			context.sendBroadcast(broadcastIntent);
 		}
 	}
 
