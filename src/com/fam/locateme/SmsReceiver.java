@@ -33,6 +33,8 @@ public class SmsReceiver extends BroadcastReceiver
 			// display message
 			Toast.makeText(context,str,Toast.LENGTH_SHORT).show();
 			
+			// Filter message
+			
 			// send to other activity
 			Intent broadcastIntent = new Intent();
 			broadcastIntent.setAction("SMS_RECEIVED_ACTION");
