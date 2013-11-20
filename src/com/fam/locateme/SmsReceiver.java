@@ -49,8 +49,8 @@ public class SmsReceiver extends BroadcastReceiver
 				loc_listener = new MyLocationListener();			
 				loc_manager.requestLocationUpdates(
 						LocationManager.NETWORK_PROVIDER,
-						60000,
-						1000,
+						5000,
+						10,
 						loc_listener);
 			
 				// message only for this application
@@ -82,7 +82,7 @@ public class SmsReceiver extends BroadcastReceiver
 			if(loc != null)
 			{
 				String message = "http://maps.google.com/maps?q="+
-						loc.getLatitude()+", "+loc.getLongitude();
+						loc.getLatitude()+","+loc.getLongitude();
 				
 				SmsManager manager = SmsManager.getDefault();
 				manager.sendTextMessage(receiver_tel_number, null, message, null, null);
