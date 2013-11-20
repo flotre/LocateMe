@@ -24,7 +24,7 @@ public class MainActivity extends Activity
 		{
 			// display sms received in textview
 			TextView SMSes = (TextView) findViewById(R.id.console);
-			SMSes.setText(intent.getExtras().getString("sms"));
+			SMSes.setText(SMSes.getText() + intent.getExtras().getString("sms"));
 		}
 	};
 	
@@ -38,6 +38,8 @@ public class MainActivity extends Activity
 		// intent to filter for sms messages received
 		intentFilter = new IntentFilter();
 		intentFilter.addAction("SMS_RECEIVED_ACTION");
+		
+		registerReceiver(intentReceiver, intentFilter);
     }
 	
 	private void SendSms(String phone_number, String message)
@@ -50,15 +52,15 @@ public class MainActivity extends Activity
 	protected void onResume()
 	{
 		//register the receiver
-		registerReceiver(intentReceiver, intentFilter);
+		//registerReceiver(intentReceiver, intentFilter);
 		super.onResume();
 	}
 	
 	@Override
-	protected void onPause()
+	protected void onDestroy()
 	{
 		// unregister the receiver
 		unregisterReceiver(intentReceiver);
-		super.onPause();
+		super.onDestroy();
 	}
 }
