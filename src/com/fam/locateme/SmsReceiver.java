@@ -50,9 +50,19 @@ public class SmsReceiver extends BroadcastReceiver
 				// location request
 				loc_manager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
 
-				Location loc = loc_manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-				if(loc != null)
+				Location loc_gps = loc_manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+				Location loc_net = loc_manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+				if(loc_gps != null || loc_net != null)
 				{
+					Location loc;
+					if(loc_gps != null)
+					{
+						loc = loc_gps;
+					}
+					else
+					{
+						loc= loc_net;
+					}
 					SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 					Date date = new Date(loc.getTime());
 					String strDate = format.format(date);
