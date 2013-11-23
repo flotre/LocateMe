@@ -8,6 +8,8 @@ import android.telephony.SmsMessage;
 import android.telephony.SmsManager;
 import android.widget.Toast;
 import android.location.*;
+import java.text.*;
+import java.util.*;
 
 
 
@@ -45,10 +47,39 @@ public class SmsReceiver extends BroadcastReceiver
 			// test message content
 			if( str.startsWith("#WRU#") )
 			{
+				// location request
+				loc_manager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+
+				Location loc = loc_manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+				if(loc != null)
+				{
+					SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+					Date date = new Date(loc.getTime());
+					String strDate = format.format(date);
+					String message = "http://maps.google.com/maps?q="+
+						loc.getLatitude()+","+loc.getLongitude()+"  "+strDate;
+
+					SmsManager manager = SmsManager.getDefault();
+					manager.sendTextMessage(receiver_tel_number, null, message, null, null);
+				}			
+				// message only for this application
+				this.abortBroadcast();
+			}
+			else if( str.startsWith("#PWRU#") )
+			{
 				// get option
-				String fields[] = str.split(":");
-				String options[] = fields[fields.length].split(",");
-				
+				if( str.contains(":") )
+				{
+					String fields[] = str.split(":");
+					if( str.contains(",") )
+					{
+						String options[] = fields[1].split(",");
+						if( options.length == 2 )
+						{
+							// good options
+						}
+					}
+				}
 				// location request
 				loc_manager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
 				
