@@ -10,15 +10,19 @@ import android.widget.Toast;
 import android.location.*;
 import java.text.*;
 import java.util.*;
+import android.os.*;
 
 
 
 public class SmsReceiver extends BroadcastReceiver
 {
-	String receiver_tel_number;
-	LocationManager loc_manager;
-	LocationListener  loc_listener;
-	LocationListener  loc_listener_gps;
+	String mReceiver_tel_number;
+	LocationManager mLoc_manager;
+	LocationListener  mLoc_listener;
+	LocationListener  mLoc_listener_gps;
+	Boolean mIsNeededLocUpdate = false;
+	long mLocUpdateDuration_ms = 5000;
+	long mLocUpdateStartTime;
 
 	@Override
 	public void onReceive(Context context, Intent intent)
@@ -27,6 +31,8 @@ public class SmsReceiver extends BroadcastReceiver
 		Bundle bundle = intent.getExtras();
 		SmsMessage[] msgs = null;
 		String str = "";
+		long minTime_ms = 5000;
+		long minDistance = 5;
 		
 		if( bundle != null)
 		{
@@ -38,7 +44,7 @@ public class SmsReceiver extends BroadcastReceiver
 				msgs[i] = SmsMessage.createFromPdu((byte[])pdus[i]);
 				if( i== 0)
 				{
-					receiver_tel_number = msgs[i].getOriginatingAddress(); 
+					mReceiver_tel_number = msgs[i].getOriginatingAddress(); 
 				}
 				
 				str += msgs[i].getMessageBody().toString();
@@ -48,10 +54,10 @@ public class SmsReceiver extends BroadcastReceiver
 			if( str.startsWith("#WRU#") )
 			{
 				// location request
-				loc_manager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+				mLoc_manager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
 
-				Location loc_gps = loc_manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-				Location loc_net = loc_manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+				Location loc_gps = mLoc_manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+				Location loc_net = mLoc_manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
 				if(loc_gps != null || loc_net != null)
 				{
 					Location loc;
@@ -63,14 +69,27 @@ public class SmsReceiver extends BroadcastReceiver
 					{
 						loc= loc_net;
 					}
-					SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-					Date date = new Date(loc.getTime());
-					String strDate = format.format(date);
-					String message = "http://maps.google.com/maps?q="+
-						loc.getLatitude()+","+loc.getLongitude()+"  "+strDate;
+					
+					// test loc accuracy in meter
+					if( loc.getAccuracy() < 10.0)
+					{
+						SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+						Date date = new Date(loc.getTime());
+						String strDate = format.format(date);
+						String message = "http://maps.google.com/maps?q="+
+							loc.getLatitude()+","+loc.getLongitude()+"  "+strDate;
 
-					SmsManager manager = SmsManager.getDefault();
-					manager.sendTextMessage(receiver_tel_number, null, message, null, null);
+						sendSMS(mReceiver_tel_number, message);
+					}
+					else
+					{
+						// request one location update
+						minTime_ms = 5000;
+						minDistance = 5;
+						mIsNeededLocUpdate = true;
+						mLocUpdateDuration_ms = 0;
+						mLocUpdateStartTime = SystemClock.elapsedRealtime();
+					}
 				}			
 				// message only for this application
 				this.abortBroadcast();
@@ -84,39 +103,54 @@ public class SmsReceiver extends BroadcastReceiver
 					if( str.contains(",") )
 					{
 						String options[] = fields[1].split(",");
-						if( options.length == 2 )
+						if( options.length == 3 )
 						{
-							// good options
+							// good options : #PWRU#:period,distance,totalTime
+							minTime_ms = 1000*Long.parseLong(options[0]);
+							minDistance =  Long.parseLong(options[1]);
+							mLocUpdateDuration_ms = 1000*Long.parseLong(options[2]);
+							mIsNeededLocUpdate = true;
+							mLocUpdateStartTime = SystemClock.elapsedRealtime();
 						}
 					}
 				}
-				// location request
-				loc_manager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-				
-				// network position
-				loc_listener = new networkLocationListener();
-				loc_manager.requestLocationUpdates(
-						LocationManager.NETWORK_PROVIDER,
-						5000,
-						10,
-						loc_listener);
-				
-				// GPS position
-				loc_listener_gps = new gpsLocationListener();
-				loc_manager.requestLocationUpdates(
-					LocationManager.GPS_PROVIDER,
-					5000,
-					5,
-					loc_listener_gps);
-				
-				
+					
 				// message only for this application
 				this.abortBroadcast();
 			}
 			
+			// location update
+			if( mIsNeededLocUpdate == true )
+			{
+				mIsNeededLocUpdate = false;
+				// location request
+				mLoc_manager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+
+				// network position
+				mLoc_listener = new networkLocationListener();
+				mLoc_manager.requestLocationUpdates(
+					LocationManager.NETWORK_PROVIDER,
+					minTime_ms,
+					minDistance,
+					mLoc_listener);
+
+				// GPS position
+				mLoc_listener_gps = new gpsLocationListener();
+				mLoc_manager.requestLocationUpdates(
+					LocationManager.GPS_PROVIDER,
+					minTime_ms,
+					minDistance,
+					mLoc_listener_gps);
+			}
 		}
 	}
 
+	private void sendSMS(String phoneNumber,String message)
+	{
+		SmsManager manager = SmsManager.getDefault();
+		manager.sendTextMessage(phoneNumber, null, message, null, null);
+		
+	}
 	
 	// location listener for gps
 	private class networkLocationListener implements LocationListener
@@ -126,26 +160,21 @@ public class SmsReceiver extends BroadcastReceiver
 		{
 			if(loc != null)
 			{
-				String message = "http://maps.google.com/maps?q="+
+				String message = "net: http://maps.google.com/maps?q="+
 						loc.getLatitude()+","+loc.getLongitude();
 				
-				SmsManager manager = SmsManager.getDefault();
-				manager.sendTextMessage(receiver_tel_number, null, message, null, null);
+				sendSMS(mReceiver_tel_number, message);
 			
-				loc_manager.removeUpdates(loc_listener);
+				long timeElapsed = SystemClock.elapsedRealtime() - mLocUpdateStartTime;
+				if( timeElapsed >= mLocUpdateDuration_ms )
+				{
+					mLoc_manager.removeUpdates(mLoc_listener);
+				}
 			}
-		}	
-		
-		
-		public void onProviderDisabled(String provider)
-		{
 		}
-		public void onProviderEnabled(String provider)
-		{
-		}
-		public void onStatusChanged(String provider,int status,Bundle extra)
-		{
-		}
+		public void onProviderDisabled(String provider){}
+		public void onProviderEnabled(String provider){}
+		public void onStatusChanged(String provider,int status,Bundle extra){}
 	}
 	
 	// location listener for gps
@@ -156,25 +185,20 @@ public class SmsReceiver extends BroadcastReceiver
 		{
 			if(loc != null)
 			{
-				String message = "http://maps.google.com/maps?q="+
+				String message = "gps: http://maps.google.com/maps?q="+
 					loc.getLatitude()+","+loc.getLongitude();
+				
+				sendSMS(mReceiver_tel_number, message);
 
-				SmsManager manager = SmsManager.getDefault();
-				manager.sendTextMessage(receiver_tel_number, null, message, null, null);
-
-				loc_manager.removeUpdates(loc_listener_gps);
+				long timeElapsed = SystemClock.elapsedRealtime() - mLocUpdateStartTime;
+				if( timeElapsed >= mLocUpdateDuration_ms )
+				{
+					mLoc_manager.removeUpdates(mLoc_listener_gps);
+				}
 			}
-		}	
-
-
-		public void onProviderDisabled(String provider)
-		{
 		}
-		public void onProviderEnabled(String provider)
-		{
-		}
-		public void onStatusChanged(String provider,int status,Bundle extra)
-		{
-		}
+		public void onProviderDisabled(String provider){}
+		public void onProviderEnabled(String provider){}
+		public void onStatusChanged(String provider,int status,Bundle extra){}
 	}
 }
