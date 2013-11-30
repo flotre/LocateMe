@@ -14,13 +14,29 @@ import android.content.Intent;
 
 public class MainActivity extends Activity
 {
+    IntentFilter intentFilter;
+    
+	private BroadcastReceiver intentReceiver = new BroadcastReceiver() {
 
+        @Override
+        public void onReceive(Context Context, Intent intent)
+        {
+            // display content on a new line
+            TextView console = (TextView)findViewById(R.id.console);
+            console.append("\n"+intent.getExtras().getString("info"));
+            
+        } 
+    };
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState)
 	{
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);		
+        setContentView(R.layout.main);
+
+		intentFilter = new IntentFilter();
+		intentFilter.addAction("CON-UPDATE");
+		registerReceiver(intentReceiver, intentFilter);
     }
 	
 	
@@ -35,6 +51,7 @@ public class MainActivity extends Activity
 	@Override
 	protected void onDestroy()
 	{
-		super.onDestroy();
+		unregisterReceiver(intentReceiver);
+        super.onDestroy();
 	}
 }
