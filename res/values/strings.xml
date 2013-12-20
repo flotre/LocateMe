@@ -3,5 +3,6 @@
 
     <string name="hello">Coucou, i am Bichon</string>
     <string name="app_name">LocateMe</string>
+	<string name="button_send">Test</string>
 
 </resources>

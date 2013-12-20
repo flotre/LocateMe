@@ -12,6 +12,7 @@ import java.text.*;
 import java.util.*;
 import android.os.*;
 import android.util.*;
+import android.content.*;
 
 
 public class SmsReceiver extends BroadcastReceiver
@@ -57,7 +58,7 @@ public class SmsReceiver extends BroadcastReceiver
 			{
 				// request one location update
 				minTime_ms = 5000;
-				minDistance = 5;
+				minDistance = 0;
 				mIsNeededLocUpdate = true;
 				mLocUpdateDuration_ms = 0;
 				mLocUpdateStartTime = SystemClock.elapsedRealtime();
@@ -86,6 +87,24 @@ public class SmsReceiver extends BroadcastReceiver
 					}
 				}
 					
+				// message only for this application
+				this.abortBroadcast();
+			}
+			else if(str.startsWith("#bat#"))
+			{
+				IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+				Intent batteryStatus = context.registerReceiver(null, ifilter);
+				
+				int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+				int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+
+				float batteryPct = level / (float)scale;
+				
+				String message = "battery:"+batteryPct+" % ("+level+","+scale+")";
+
+				sendSMS(mReceiver_tel_number, message);
+				
+				
 				// message only for this application
 				this.abortBroadcast();
 			}
@@ -156,28 +175,30 @@ public class SmsReceiver extends BroadcastReceiver
 		}
 	}
 
+	
+	
 	private void sendSMS(String phoneNumber,String message)
 	{
 		SmsManager manager = SmsManager.getDefault();
 		manager.sendTextMessage(phoneNumber, null, message, null, null);
-		
 	}
 	
 	// location listener for gps
 	private class networkLocationListener implements LocationListener
 	{
-		
 		public void onLocationChanged(Location loc)
 		{
 			if(loc != null)
 			{
-				String message = "net: http://maps.google.com/maps?q="+
-						loc.getLatitude()+","+loc.getLongitude();
-				
-				sendSMS(mReceiver_tel_number, message);
-			
-				long timeElapsed = SystemClock.elapsedRealtime() - mLocUpdateStartTime;
+				// check time
+                long timeElapsed = SystemClock.elapsedRealtime() - mLocUpdateStartTime;
                 Log.d(tag,"send loc:"+timeElapsed);
+                
+                String message = "net: http://maps.google.com/maps?q="+
+                    loc.getLatitude()+","+loc.getLongitude();
+
+                sendSMS(mReceiver_tel_number, message);
+                	
 				if( timeElapsed >= mLocUpdateDuration_ms )
 				{
 					mLoc_manager.removeUpdates(mLoc_listener);
@@ -193,7 +214,6 @@ public class SmsReceiver extends BroadcastReceiver
 	// location listener for gps
 	private class gpsLocationListener implements LocationListener
 	{
-
 		public void onLocationChanged(Location loc)
 		{
 			if(loc != null)
