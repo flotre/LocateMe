@@ -98,9 +98,9 @@ public class SmsReceiver extends BroadcastReceiver
 				int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
 				int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
 
-				float batteryPct = level / (float)scale;
+				float batteryPct = 100*level / (float)scale;
 				
-				String message = "battery:"+batteryPct+" % ("+level+","+scale+")";
+				String message = "battery: "+batteryPct+"% ("+level+","+scale+")";
 
 				sendSMS(mReceiver_tel_number, message);
 				
