@@ -17,7 +17,6 @@ import android.content.*;
 
 public class SmsReceiver extends BroadcastReceiver
 {
-	private static final String tag = "locateme";
     String mReceiver_tel_number;
 	LocationManager mLoc_manager;
 	LocationListener  mLoc_listener;
@@ -102,7 +101,7 @@ public class SmsReceiver extends BroadcastReceiver
 				
 				String message = "battery: "+batteryPct+"% ("+level+","+scale+")";
 
-				sendSMS(mReceiver_tel_number, message);
+				MainActivity.sendSMS(mReceiver_tel_number, message);
 				
 				
 				// message only for this application
@@ -113,7 +112,7 @@ public class SmsReceiver extends BroadcastReceiver
 			if( mIsNeededLocUpdate == true )
 			{
 				mIsNeededLocUpdate = false;
-                Log.d(tag,"add loc update:"+mLocUpdateStartTime);
+                Log.d(MainActivity.TAG,"add loc update:"+mLocUpdateStartTime);
                 
                 
 				// location request
@@ -143,7 +142,18 @@ public class SmsReceiver extends BroadcastReceiver
                         String message = "http://maps.google.com/maps?q="+
                             loc.getLatitude()+","+loc.getLongitude()+"  "+strDate;
 
-                        sendSMS(mReceiver_tel_number, message);
+                        MainActivity.sendSMS(mReceiver_tel_number, message);
+                    }
+					else if(loc_gps!= null)
+                    {
+
+						// GPS position
+						mLoc_listener_gps = new gpsLocationListener();
+						mLoc_manager.requestLocationUpdates(
+							LocationManager.GPS_PROVIDER,
+							minTime_ms,
+							minDistance,
+							mLoc_listener_gps);
                     }
                     else if(loc_net != null)
 					{
@@ -155,33 +165,15 @@ public class SmsReceiver extends BroadcastReceiver
 							minDistance,
 							mLoc_listener);
                     }
-                    else if(loc_gps!= null)
-                    {
-
-						// GPS position
-						mLoc_listener_gps = new gpsLocationListener();
-						mLoc_manager.requestLocationUpdates(
-							LocationManager.GPS_PROVIDER,
-							minTime_ms,
-							minDistance,
-							mLoc_listener_gps);
-                    }
                     else
                     {
-                        Log.e(tag,"no location available");
+                        Log.e(MainActivity.TAG,"no location available");
                     }
                 }
 			}
 		}
 	}
 
-	
-	
-	private void sendSMS(String phoneNumber,String message)
-	{
-		SmsManager manager = SmsManager.getDefault();
-		manager.sendTextMessage(phoneNumber, null, message, null, null);
-	}
 	
 	// location listener for gps
 	private class networkLocationListener implements LocationListener
@@ -192,17 +184,17 @@ public class SmsReceiver extends BroadcastReceiver
 			{
 				// check time
                 long timeElapsed = SystemClock.elapsedRealtime() - mLocUpdateStartTime;
-                Log.d(tag,"send loc:"+timeElapsed);
+                Log.d(MainActivity.TAG,"send loc:"+timeElapsed);
                 
                 String message = "net: http://maps.google.com/maps?q="+
                     loc.getLatitude()+","+loc.getLongitude();
 
-                sendSMS(mReceiver_tel_number, message);
+                MainActivity.sendSMS(mReceiver_tel_number, message);
                 	
 				if( timeElapsed >= mLocUpdateDuration_ms )
 				{
 					mLoc_manager.removeUpdates(mLoc_listener);
-                    Log.d(tag,"remove net loc listener");
+                    Log.d(MainActivity.TAG,"remove net loc listener");
 				}
 			}
 		}
@@ -221,13 +213,13 @@ public class SmsReceiver extends BroadcastReceiver
 				String message = "gps: http://maps.google.com/maps?q="+
 					loc.getLatitude()+","+loc.getLongitude();
 				
-				sendSMS(mReceiver_tel_number, message);
+				MainActivity.sendSMS(mReceiver_tel_number, message);
 
 				long timeElapsed = SystemClock.elapsedRealtime() - mLocUpdateStartTime;
 				if( timeElapsed >= mLocUpdateDuration_ms )
 				{
 					mLoc_manager.removeUpdates(mLoc_listener_gps);
-                    Log.d(tag,"remove gps loc listener");
+                    Log.d(MainActivity.TAG,"remove gps loc listener");
 				}
 			}
 		}

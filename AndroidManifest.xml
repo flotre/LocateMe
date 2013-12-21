@@ -29,8 +29,9 @@
 		</receiver>
 		<receiver android:name=".BatteryLevelReceiver">
 			<intent-filter>
-				  <action android:name="android.intent.action.ACTION_BATTERY_LOW"/>
-				  </intent-filter>
+				<action android:name="android.intent.action.BATTERY_LOW"/>
+				<action android:name="android.intent.action.ACTION_POWER_CONNECTED"/>
+			</intent-filter>
 		</receiver>
 
         <receiver android:name=".StartMyActivityAtBootReceiver"

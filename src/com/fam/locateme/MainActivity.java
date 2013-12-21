@@ -10,14 +10,15 @@ import android.content.IntentFilter;
 import android.content.Context;
 import android.content.Intent;
 import android.telephony.*;
+import android.support.v4.content.*;
 
 
 public class MainActivity extends Activity
 {
+    public static final String TAG = "locateme";
     IntentFilter intentFilter;
-	Button btnSendSMS;
-    EditText txtPhoneNo;
-    EditText txtMessage;
+	private static TextView m_console;
+	
     
 	private BroadcastReceiver intentReceiver = new BroadcastReceiver() {
 
@@ -43,6 +44,7 @@ public class MainActivity extends Activity
 		intentFilter.addAction("CON-UPDATE");
 		registerReceiver(intentReceiver, intentFilter);
 		
+		m_console = (TextView)findViewById(R.id.console);
     }
 	
 	
@@ -63,9 +65,6 @@ public class MainActivity extends Activity
 	
 	public void TestButton_onClick(View view)
 	{
-		Intent intent = new Intent();
-		intent.setAction("CON-UPDATE");
-		
 		IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
 		Intent batteryStatus = this.registerReceiver(null, ifilter);
 
@@ -76,10 +75,29 @@ public class MainActivity extends Activity
 
 		String message = "battery:"+batteryPct+" % ("+level+","+scale+")";
 		
-		
+		myLog(message);
+	}
+	
+	// ecrit un message dans la console
+	public void conWrite(String message)
+	{
+		Intent intent = new Intent();
+		intent.setAction("CON-UPDATE");
 		intent.putExtra("info", message);
-		
-		
 		this.sendBroadcast(intent);
 	}
+	
+	public static void myLog(String message)
+	{
+		m_console.append("\n"+SystemClock.elapsedRealtime()+":"+message);
+	}
+	
+	
+	// send a sms
+	public static void sendSMS(String phoneNumber,String message)
+	{
+		SmsManager manager = SmsManager.getDefault();
+		manager.sendTextMessage(phoneNumber, null, message, null, null);
+	}
+	
 }

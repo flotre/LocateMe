@@ -14,16 +14,14 @@ public class BatteryLevelReceiver extends BroadcastReceiver
 			int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
 			int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
 
-			float batteryPct = level / (float)scale;
+			float batteryPct = 100*level / (float)scale;
 
 			String message = "battery:"+batteryPct+" % ("+level+","+scale+")";
 
-			sendSMS(m_tel_number, message);
+			MainActivity.sendSMS(m_tel_number, message);
+			
+			MainActivity.myLog(message);
+			
 		}
 
-	private void sendSMS(String phoneNumber,String message)
-	{
-		SmsManager manager = SmsManager.getDefault();
-		manager.sendTextMessage(phoneNumber, null, message, null, null);
-	}
 }
