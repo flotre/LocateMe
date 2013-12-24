@@ -113,7 +113,7 @@ public class SmsReceiver extends BroadcastReceiver
 			{
 				mIsNeededLocUpdate = false;
 				m_timerLocation = null;
-                Log.d(MainActivity.TAG,"add loc update:"+mLocUpdateStartTime);
+                MainActivity.myLog("add loc update:"+mLocUpdateStartTime);
                 
                 
 				// location request
@@ -164,10 +164,12 @@ public class SmsReceiver extends BroadcastReceiver
 
 				@Override
 				public void run() {
+					MainActivity.myLog("timeout");
 					mLoc_manager.removeUpdates(mLoc_listener_gps);
 				}
 
-			}, (timeout*1000) ); 
+			}, (timeout*1000) );
+		MainActivity.myLog("add timeout");
 	}
 	
 	private void removeTimeout()
@@ -187,7 +189,7 @@ public class SmsReceiver extends BroadcastReceiver
 			{
 				// check time
                 long timeElapsed = SystemClock.elapsedRealtime() - mLocUpdateStartTime;
-                Log.d(MainActivity.TAG,"send loc:"+timeElapsed);
+                MainActivity.myLog("send loc:"+timeElapsed);
                 
                 String message = "net: http://maps.google.com/maps?q="+
                     loc.getLatitude()+","+loc.getLongitude();
@@ -199,7 +201,7 @@ public class SmsReceiver extends BroadcastReceiver
 				if( timeElapsed >= mLocUpdateDuration_ms )
 				{
 					mLoc_manager.removeUpdates(mLoc_listener);
-                    Log.d(MainActivity.TAG,"remove net loc listener");
+                    MainActivity.myLog("remove net loc listener");
 				}
 			}
 		}
@@ -226,7 +228,7 @@ public class SmsReceiver extends BroadcastReceiver
 				if( timeElapsed >= mLocUpdateDuration_ms )
 				{
 					mLoc_manager.removeUpdates(mLoc_listener_gps);
-                    Log.d(MainActivity.TAG,"remove gps loc listener");
+                    MainActivity.myLog("remove gps loc listener");
 				}
 			}
 		}
