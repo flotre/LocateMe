@@ -24,6 +24,7 @@ public class SmsReceiver extends BroadcastReceiver
 	Boolean mIsNeededLocUpdate = false;
 	long mLocUpdateDuration_ms = 5000;
 	long mLocUpdateStartTime;
+	Timer m_timerLocation = null;
 
 	@Override
 	public void onReceive(Context context, Intent intent)
@@ -56,7 +57,7 @@ public class SmsReceiver extends BroadcastReceiver
 			if( str.startsWith("#wru#") )
 			{
 				// request one location update
-				minTime_ms = 5000;
+				minTime_ms = 0;
 				minDistance = 0;
 				mIsNeededLocUpdate = true;
 				mLocUpdateDuration_ms = 0;
@@ -103,7 +104,6 @@ public class SmsReceiver extends BroadcastReceiver
 
 				MainActivity.sendSMS(mReceiver_tel_number, message);
 				
-				
 				// message only for this application
 				this.abortBroadcast();
 			}
@@ -112,6 +112,7 @@ public class SmsReceiver extends BroadcastReceiver
 			if( mIsNeededLocUpdate == true )
 			{
 				mIsNeededLocUpdate = false;
+				m_timerLocation = null;
                 Log.d(MainActivity.TAG,"add loc update:"+mLocUpdateStartTime);
                 
                 
@@ -131,8 +132,11 @@ public class SmsReceiver extends BroadcastReceiver
 						minTime_ms,
 						minDistance,
 						mLoc_listener_gps);
+					
+					addTimeout(60);
 				}
-				else if (loc_net)
+				
+				if (loc_net)
 				{
 					// network position
 					mLoc_listener = new networkLocationListener();
@@ -142,7 +146,9 @@ public class SmsReceiver extends BroadcastReceiver
 						minDistance,
 						mLoc_listener);
 				}
-				else
+				
+				// no service available
+				if(!loc_net && !loc_gps)
 				{
 					MainActivity.sendSMS(mReceiver_tel_number,"no location available");
 				}
@@ -150,6 +156,27 @@ public class SmsReceiver extends BroadcastReceiver
 		}
 	}
 
+	// add timeout for location update
+	private void addTimeout(long timeout)
+	{
+		m_timerLocation = new Timer();
+		m_timerLocation.schedule( new TimerTask() {
+
+				@Override
+				public void run() {
+					mLoc_manager.removeUpdates(mLoc_listener_gps);
+				}
+
+			}, (timeout*1000) ); 
+	}
+	
+	private void removeTimeout()
+	{
+		if(m_timerLocation != null)
+		{
+			m_timerLocation.cancel();
+		}
+	}
 	
 	// location listener for gps
 	private class networkLocationListener implements LocationListener
@@ -166,6 +193,8 @@ public class SmsReceiver extends BroadcastReceiver
                     loc.getLatitude()+","+loc.getLongitude();
 
                 MainActivity.sendSMS(mReceiver_tel_number, message);
+				
+				removeTimeout();
                 	
 				if( timeElapsed >= mLocUpdateDuration_ms )
 				{
@@ -190,6 +219,8 @@ public class SmsReceiver extends BroadcastReceiver
 					loc.getLatitude()+","+loc.getLongitude();
 				
 				MainActivity.sendSMS(mReceiver_tel_number, message);
+				
+				removeTimeout();
 
 				long timeElapsed = SystemClock.elapsedRealtime() - mLocUpdateStartTime;
 				if( timeElapsed >= mLocUpdateDuration_ms )
