@@ -11,17 +11,11 @@ public class BatteryLevelReceiver extends BroadcastReceiver
 		public void onReceive(Context context, Intent intent) {
 			// this is where we deal with the data sent from the battery.
 
-			int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
-			int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+				String message = "battery low";
 
-			float batteryPct = 100*level / (float)scale;
-
-			String message = "battery:"+batteryPct+" % ("+level+","+scale+")";
-
-			MainActivity.sendSMS(m_tel_number, message);
+				MainActivity.sendSMS(m_tel_number, message);
 			
-			MainActivity.myLog(message);
+				MainActivity.myLog(message);
 			
 		}
-
 }
