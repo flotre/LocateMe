@@ -119,57 +119,33 @@ public class SmsReceiver extends BroadcastReceiver
 				mLoc_manager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
                
                 //test available location service
-                Location loc_gps = mLoc_manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                Location loc_net = mLoc_manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                if(loc_gps != null || loc_net != null)
-                {
-                    Location loc;
-                    if(loc_gps != null)
-                    {
-                        loc = loc_gps;
-                    }
-                    else
-                    {
-                        loc= loc_net;
-                    }
-
-                    // test loc accuracy in meter
-                    if( loc.getAccuracy() < 10.0)
-                    {
-                        SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-                        Date date = new Date(loc.getTime());
-                        String strDate = format.format(date);
-                        String message = "http://maps.google.com/maps?q="+
-                            loc.getLatitude()+","+loc.getLongitude()+"  "+strDate;
-
-                        MainActivity.sendSMS(mReceiver_tel_number, message);
-                    }
-					else if(loc_gps!= null)
-                    {
-
-						// GPS position
-						mLoc_listener_gps = new gpsLocationListener();
-						mLoc_manager.requestLocationUpdates(
-							LocationManager.GPS_PROVIDER,
-							minTime_ms,
-							minDistance,
-							mLoc_listener_gps);
-                    }
-                    else if(loc_net != null)
-					{
-						// network position
-						mLoc_listener = new networkLocationListener();
-						mLoc_manager.requestLocationUpdates(
-							LocationManager.NETWORK_PROVIDER,
-							minTime_ms,
-							minDistance,
-							mLoc_listener);
-                    }
-                    else
-                    {
-                        Log.e(MainActivity.TAG,"no location available");
-                    }
-                }
+                Boolean loc_gps = mLoc_manager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+                Boolean loc_net = mLoc_manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+                    
+				if (loc_gps)
+				{
+					// GPS position
+					mLoc_listener_gps = new gpsLocationListener();
+					mLoc_manager.requestLocationUpdates(
+						LocationManager.GPS_PROVIDER,
+						minTime_ms,
+						minDistance,
+						mLoc_listener_gps);
+				}
+				else if (loc_net)
+				{
+					// network position
+					mLoc_listener = new networkLocationListener();
+					mLoc_manager.requestLocationUpdates(
+						LocationManager.NETWORK_PROVIDER,
+						minTime_ms,
+						minDistance,
+						mLoc_listener);
+				}
+				else
+				{
+					MainActivity.sendSMS(mReceiver_tel_number,"no location available");
+				}
 			}
 		}
 	}
