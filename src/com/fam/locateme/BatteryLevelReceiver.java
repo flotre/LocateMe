@@ -13,7 +13,7 @@ public class BatteryLevelReceiver extends BroadcastReceiver
 
 				String message = "battery low";
 
-				MainActivity.sendSMS(m_tel_number, message);
+				toolbox.sendSMS(m_tel_number, message);
 			
 				MainActivity.myLog(message);
 			

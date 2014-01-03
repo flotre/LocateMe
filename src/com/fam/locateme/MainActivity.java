@@ -14,22 +14,33 @@ import android.support.v4.content.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.text.*;
+import android.net.*;
+import java.lang.reflect.*;
 
 
 public class MainActivity extends Activity
 {
-    public static final String TAG = "locateme";
     IntentFilter intentFilter;
 	private static Queue<String> m_consoleQueue=new ConcurrentLinkedQueue<String>();
+	private static boolean state = false;
 	
     
 	private BroadcastReceiver intentReceiver = new BroadcastReceiver() {
 
         @Override
-        public void onReceive(Context Context, Intent intent)
+        public void onReceive(Context context, Intent intent)
         {
-            // display content on a new line
-            myLog(intent.getExtras().getString("info"));   
+			String action = intent.getAction();
+
+			if(action.equals("CON-UPDATE")){
+				// display content on a new line
+				myLog(intent.getExtras().getString("info")); 
+			}
+			else if(action.equals(toolbox.STOP_CONNECTION)){
+				//disable connection
+				toolbox.setMobileDataEnabled(context,false);
+				myLog("action stop connection");
+			}
         } 
     };
 	
@@ -43,8 +54,15 @@ public class MainActivity extends Activity
         setContentView(R.layout.main);
 
 		intentFilter = new IntentFilter();
+		intentFilter.addAction(toolbox.STOP_CONNECTION);
+		registerReceiver(intentReceiver, intentFilter);
+		
+		intentFilter = new IntentFilter();
 		intentFilter.addAction("CON-UPDATE");
 		registerReceiver(intentReceiver, intentFilter);
+		
+		//disable connection
+		toolbox.setMobileDataEnabled(this,false);
     }
 	
 	
@@ -85,6 +103,12 @@ public class MainActivity extends Activity
 		String message = "battery:"+batteryPct+" % ("+level+","+scale+")";
 		
 		myLog(message);
+		
+		{
+			toolbox.setMobileDataEnabled(this,true);
+			
+			toolbox.addTimeout(this,10);
+		}
 	}
 	
 	private void consoleAdd(String message)
@@ -112,11 +136,6 @@ public class MainActivity extends Activity
 	}
 	
 	
-	// send a sms
-	public static void sendSMS(String phoneNumber,String message)
-	{
-		SmsManager manager = SmsManager.getDefault();
-		manager.sendTextMessage(phoneNumber, null, message, null, null);
-	}
+	
 	
 }

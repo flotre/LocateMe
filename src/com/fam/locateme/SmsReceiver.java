@@ -13,6 +13,8 @@ import java.util.*;
 import android.os.*;
 import android.util.*;
 import android.content.*;
+import android.app.*;
+
 
 
 public class SmsReceiver extends BroadcastReceiver
@@ -102,7 +104,7 @@ public class SmsReceiver extends BroadcastReceiver
 				
 				String message = "battery: "+batteryPct+"% ("+level+","+scale+")";
 
-				MainActivity.sendSMS(mReceiver_tel_number, message);
+				toolbox.sendSMS(mReceiver_tel_number, message);
 				
 				// message only for this application
 				this.abortBroadcast();
@@ -113,9 +115,8 @@ public class SmsReceiver extends BroadcastReceiver
 			{
 				mIsNeededLocUpdate = false;
 				m_timerLocation = null;
-                Log.d(MainActivity.TAG,"add loc update:"+mLocUpdateStartTime);
-                
-                
+                Log.d(toolbox.TAG,"add loc update:"+mLocUpdateStartTime);
+                   
 				// location request
 				mLoc_manager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
                
@@ -132,8 +133,6 @@ public class SmsReceiver extends BroadcastReceiver
 						minTime_ms,
 						minDistance,
 						mLoc_listener_gps);
-					
-					addTimeout(60);
 				}
 				
 				if (loc_net)
@@ -150,37 +149,23 @@ public class SmsReceiver extends BroadcastReceiver
 				// no service available
 				if(!loc_net && !loc_gps)
 				{
-					MainActivity.sendSMS(mReceiver_tel_number,"no location available");
+					toolbox.sendSMS(mReceiver_tel_number,"no location available");
+					
+					//disable connection
+					toolbox.setMobileDataEnabled(context,false);
+				}
+				else
+				{
+					//enable connection
+					toolbox.setMobileDataEnabled(context,true);
+					toolbox.addTimeout(context,60*5);
 				}
 			}
 		}
 	}
 
-	// add timeout for location update
-	private void addTimeout(long timeout)
-	{
-		m_timerLocation = new Timer();
-		m_timerLocation.schedule( new TimerTask() {
-
-				@Override
-				public void run() {
-					Log.d(MainActivity.TAG,"timeout");
-					mLoc_manager.removeUpdates(mLoc_listener_gps);
-				}
-
-			}, (timeout*1000) ); 
-		
-		Log.d(MainActivity.TAG,"add timeout");
-	}
 	
-	private void removeTimeout()
-	{
-		if(m_timerLocation != null)
-		{
-			m_timerLocation.cancel();
-			Log.d(MainActivity.TAG,"remove timeout");
-		}
-	}
+	
 	
 	// location listener for gps
 	private class networkLocationListener implements LocationListener
@@ -191,19 +176,18 @@ public class SmsReceiver extends BroadcastReceiver
 			{
 				// check time
                 long timeElapsed = SystemClock.elapsedRealtime() - mLocUpdateStartTime;
-                Log.d(MainActivity.TAG,"send loc:"+timeElapsed);
+                Log.d(toolbox.TAG,"send loc:"+timeElapsed);
                 
                 String message = "net: http://maps.google.com/maps?q="+
                     loc.getLatitude()+","+loc.getLongitude();
 
-                MainActivity.sendSMS(mReceiver_tel_number, message);
+                toolbox.sendSMS(mReceiver_tel_number, message);
 				
-				removeTimeout();
                 	
 				if( timeElapsed >= mLocUpdateDuration_ms )
 				{
 					mLoc_manager.removeUpdates(mLoc_listener);
-                    Log.d(MainActivity.TAG,"remove net loc listener");
+                    Log.d(toolbox.TAG,"remove net loc listener");
 				}
 			}
 		}
@@ -222,15 +206,13 @@ public class SmsReceiver extends BroadcastReceiver
 				String message = "gps: http://maps.google.com/maps?q="+
 					loc.getLatitude()+","+loc.getLongitude();
 				
-				MainActivity.sendSMS(mReceiver_tel_number, message);
-				
-				removeTimeout();
+				toolbox.sendSMS(mReceiver_tel_number, message);
 
 				long timeElapsed = SystemClock.elapsedRealtime() - mLocUpdateStartTime;
 				if( timeElapsed >= mLocUpdateDuration_ms )
 				{
 					mLoc_manager.removeUpdates(mLoc_listener_gps);
-                    Log.d(MainActivity.TAG,"remove gps loc listener");
+                    Log.d(toolbox.TAG,"remove gps loc listener");
 				}
 			}
 		}
