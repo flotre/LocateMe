@@ -13,7 +13,7 @@ public class toolbox
 	public static final String TAG = "locateme";
 	public static final String STOP_CONNECTION = "locateme.stopconnection";
 	
-	public static void setMobileDataEnabled(Context context, boolean enabled)
+	public static void _setMobileDataEnabled(Context context, boolean enabled)
 	{
 		// data connection
 		try
@@ -37,6 +37,59 @@ public class toolbox
 		// wifi
 		WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE); 
 		wifiManager.setWifiEnabled(enabled);
+		
+		Log.d(toolbox.TAG,"connection : "+enabled);
+	}
+	
+	public static void setMobileDataEnabled(Context context, boolean enable)
+	{
+		ConnectivityManager cm =
+			(ConnectivityManager) context
+			.getSystemService(Activity.CONNECTIVITY_SERVICE);
+		Method m = getMethodFromClass(cm, "setMobileDataEnabled");
+		runMethodofClass(cm, m, enable);
+	}
+
+	private static Method getMethodFromClass(Object obj, String methodName)
+	{
+		final String TAG = "getMethodFromClass";
+		Class<?> whichClass = null;
+		try {
+			whichClass = Class.forName(obj.getClass().getName());
+		} catch (ClassNotFoundException e2) {
+			Log.d(TAG, "class not found");
+		}
+		Method method = null;
+		try {
+			//method = whichClass.getDeclaredMethod(methodName);
+			Method[] methods = whichClass.getDeclaredMethods();
+			for (Method m : methods) {
+				if (m.getName().contains(methodName)) {
+					method = m;
+				}
+			}
+		} catch (SecurityException e2) {
+			Log.d(TAG, "SecurityException for " + methodName);
+		}
+		return method;
+	}
+
+	private static Object runMethodofClass(Object obj, Method method, Object... argv)
+	{
+		Object result = null;
+		if (method == null) return result;
+		method.setAccessible(true);
+		try {
+			result = method.invoke(obj, argv);
+		} catch (IllegalArgumentException e) {
+			Log.d(TAG, "IllegalArgumentException for " + method.getName());
+		} catch (IllegalAccessException e) {
+			Log.d(TAG, "IllegalAccessException for " + method.getName());
+		} catch (InvocationTargetException e) {
+			Log.d(TAG, "InvocationTargetException for " + method.getName()
+				  + "; Reason: " + e.getLocalizedMessage());
+		}
+		return result;
 	}
 	
 	// send a sms
