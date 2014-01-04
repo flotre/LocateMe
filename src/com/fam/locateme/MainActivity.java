@@ -38,7 +38,7 @@ public class MainActivity extends Activity
 			}
 			else if(action.equals(toolbox.STOP_CONNECTION)){
 				//disable connection
-				toolbox.setMobileDataEnabled(context,false);
+				toolbox.setInternetConnection(context,false);
 				myLog("action stop connection");
 			}
         } 
@@ -62,7 +62,7 @@ public class MainActivity extends Activity
 		registerReceiver(intentReceiver, intentFilter);
 		
 		//disable connection
-		toolbox.setMobileDataEnabled(this,false);
+		toolbox.setInternetConnection(this,false);
     }
 	
 	
@@ -105,7 +105,7 @@ public class MainActivity extends Activity
 		myLog(message);
 		
 		{
-			toolbox.setMobileDataEnabled(this,true);
+			toolbox.setInternetConnection(this,true);
 			
 			toolbox.addTimeout(this,10);
 		}

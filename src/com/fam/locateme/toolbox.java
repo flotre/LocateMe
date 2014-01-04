@@ -13,26 +13,10 @@ public class toolbox
 	public static final String TAG = "locateme";
 	public static final String STOP_CONNECTION = "locateme.stopconnection";
 	
-	public static void _setMobileDataEnabled(Context context, boolean enabled)
+	public static void setInternetConnection(Context context, boolean enabled)
 	{
-		// data connection
-		try
-		{
-			final ConnectivityManager conman = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-			final Class conmanClass = Class.forName(conman.getClass().getName());
-			final Field iConnectivityManagerField = conmanClass.getDeclaredField("mService");
-			iConnectivityManagerField.setAccessible(true);
-			final Object iConnectivityManager = iConnectivityManagerField.get(conman);
-			final Class iConnectivityManagerClass = Class.forName(iConnectivityManager.getClass().getName());
-			final Method setMobileDataEnabledMethod = iConnectivityManagerClass.getDeclaredMethod("setMobileDataEnabled", Boolean.TYPE);
-			setMobileDataEnabledMethod.setAccessible(true);
-
-			setMobileDataEnabledMethod.invoke(iConnectivityManager, enabled);
-		}
-		catch (Exception e)
-		{
-			Log.e(TAG,Log.getStackTraceString(e));
-		}
+		// data
+		setMobileDataEnabled(context,enabled);
 		
 		// wifi
 		WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE); 
@@ -41,7 +25,7 @@ public class toolbox
 		Log.d(toolbox.TAG,"connection : "+enabled);
 	}
 	
-	public static void setMobileDataEnabled(Context context, boolean enable)
+	private static void setMobileDataEnabled(Context context, boolean enable)
 	{
 		ConnectivityManager cm =
 			(ConnectivityManager) context

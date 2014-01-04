@@ -152,12 +152,12 @@ public class SmsReceiver extends BroadcastReceiver
 					toolbox.sendSMS(mReceiver_tel_number,"no location available");
 					
 					//disable connection
-					toolbox.setMobileDataEnabled(context,false);
+					toolbox.setInternetConnection(context,false);
 				}
 				else
 				{
 					//enable connection
-					toolbox.setMobileDataEnabled(context,true);
+					toolbox.setInternetConnection(context,true);
 					toolbox.addTimeout(context,60*5);
 				}
 			}
