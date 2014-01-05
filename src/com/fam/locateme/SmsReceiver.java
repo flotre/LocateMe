@@ -26,7 +26,6 @@ public class SmsReceiver extends BroadcastReceiver
 	Boolean mIsNeededLocUpdate = false;
 	long mLocUpdateDuration_ms = 5000;
 	long mLocUpdateStartTime;
-	Timer m_timerLocation = null;
 
 	@Override
 	public void onReceive(Context context, Intent intent)
@@ -56,7 +55,7 @@ public class SmsReceiver extends BroadcastReceiver
 			}
 			
 			// test message content
-			if( str.startsWith("#wru#") )
+			if( str.startsWith("#wru") )
 			{
 				// request one location update
 				minTime_ms = 0;
@@ -68,7 +67,7 @@ public class SmsReceiver extends BroadcastReceiver
 				// message only for this application
 				this.abortBroadcast();
 			}
-			else if( str.startsWith("#pwru#") )
+			else if( str.startsWith("#pwru") )
 			{
 				// get option
 				if( str.contains(":") )
@@ -79,7 +78,7 @@ public class SmsReceiver extends BroadcastReceiver
 						String options[] = fields[1].split(",");
 						if( options.length == 3 )
 						{
-							// good options : #PWRU#:period,distance,totalTime
+							// good options : #pwru:period,distance,totalTime
 							minTime_ms = 1000*Long.parseLong(options[0]);
 							minDistance =  Long.parseLong(options[1]);
 							mLocUpdateDuration_ms = 1000*Long.parseLong(options[2]);
@@ -92,7 +91,7 @@ public class SmsReceiver extends BroadcastReceiver
 				// message only for this application
 				this.abortBroadcast();
 			}
-			else if(str.startsWith("#bat#"))
+			else if(str.startsWith("#bat"))
 			{
 				IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
 				Intent batteryStatus = context.registerReceiver(null, ifilter);
@@ -109,12 +108,34 @@ public class SmsReceiver extends BroadcastReceiver
 				// message only for this application
 				this.abortBroadcast();
 			}
+			else if(str.startsWith("#cnx") )
+			{
+				// good options : #cnx:on|off
+				if( str.contains(":") )
+				{
+					String fields[] = str.split(":");
+					if( fields[1].contains("on") )
+					{
+						//enable connection
+						toolbox.setInternetConnection(context,true);
+					}
+					else if( fields[1].contains("off") )
+					{
+						//disable connection
+						toolbox.setInternetConnection(context,false);
+					}
+					
+					toolbox.sendSMS(mReceiver_tel_number,"Internet connection : "+fields[1]);
+				}
+
+				// message only for this application
+				this.abortBroadcast();
+			}
 			
 			// location update
 			if( mIsNeededLocUpdate == true )
 			{
 				mIsNeededLocUpdate = false;
-				m_timerLocation = null;
                 Log.d(toolbox.TAG,"add loc update:"+mLocUpdateStartTime);
                    
 				// location request
@@ -150,7 +171,6 @@ public class SmsReceiver extends BroadcastReceiver
 				if(!loc_net && !loc_gps)
 				{
 					toolbox.sendSMS(mReceiver_tel_number,"no location available");
-					
 					//disable connection
 					toolbox.setInternetConnection(context,false);
 				}
