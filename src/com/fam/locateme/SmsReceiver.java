@@ -93,15 +93,25 @@ public class SmsReceiver extends BroadcastReceiver
 			}
 			else if(str.startsWith("#bat"))
 			{
-				IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-				Intent batteryStatus = context.registerReceiver(null, ifilter);
+				int scale = 1;
+				int level = 1;
+				String message = "";
 				
-				int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
-				int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
-
+				try{
+					IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+					Intent batteryStatus = context.getApplicationContext().registerReceiver(null, ifilter);
+					level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+					scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+				}
+				catch (Exception e){
+					e.printStackTrace();
+					Toast.makeText(context,e.getMessage(),Toast.LENGTH_SHORT).show();
+					message += e.getMessage();
+				}
+				
 				float batteryPct = 100*level / (float)scale;
 				
-				String message = "battery: "+batteryPct+"% ("+level+","+scale+")";
+				message = "battery: "+batteryPct+"% ("+level+","+scale+")";
 
 				toolbox.sendSMS(mReceiver_tel_number, message);
 				
